@@ -273,7 +273,6 @@ public class UpgradeCalculator {
                 t = t - time[k - 1];
             }
         }
-        System.out.println(result);
         String[] output = result.split("\n");
         for (int k = 0; k < output.length; k++) {
             if (output[k].contains("true")) {
@@ -300,9 +299,54 @@ public class UpgradeCalculator {
             upgradeData = checker.upgradeAnalyser();
         }
         // Write your code below this line
+        int maxMoney = budgetLimit; // the maximum weight of the knapsack
+        int maxTime = timeLimit; // the maximum time of the knapsack
+        int noItems = upgradeData.length; // the number of items
 
-        throw new UnsupportedOperationException("Not implemented yet."); // Remove this line when you implement this
-                                                                         // method
+        int[] money = new int[upgradeData.length]; // weight of the item
+        int[] time = new int[upgradeData.length]; // value of the item
+        double[] cong = new double[upgradeData.length]; // value of the item
+        ArrayList<NodeValue> nodeValues = new ArrayList<>();
+
+        for (int i = 0; i < upgradeData.length; i++) {
+            String[] upgrade = upgradeData[i].split(", ");
+            money[i] = Integer.parseInt(upgrade[1]);
+            time[i] = Integer.parseInt(upgrade[2]);
+
+            int id = intersectionStringToIndex.get(upgrade[0]);
+            for (int j = 0; j < graph.adjList.get(id).size(); j++) {
+                GraphEdge edge = graph.adjList.get(id).get(j);
+                congestion += edge.weight;
+                cong[i] += edge.weight;
+            }
+            if (money[i] <= maxMoney && time[i] <= maxTime) {
+                double itemValue = cong[i] / (money[i] + time[i]);
+                nodeValues.add(new NodeValue(i, itemValue));
+            }
+        }
+        
+        nodeValues.sort((a, b) -> Double.compare(b.value, a.value));
+        List<Integer> selectedNodes = new ArrayList<>();
+
+        int l = maxMoney;   
+        int t = maxTime;
+
+        for (NodeValue node : nodeValues) {
+            if (money[node.nodeID] > l || time[node.nodeID] > t) {
+                break;
+            }
+            graph.selectNode(intersectionStringToIndex.get(upgradeData[node.nodeID].split(", ")[0]));
+            selectedNodes.add(node.nodeID);
+            l -= money[node.nodeID];
+            t -= time[node.nodeID];
+        }
+        
+        List<String> result = new ArrayList<>();   
+        for (int i = 0; i < selectedNodes.size(); i++) {
+            result.add(upgradeData[selectedNodes.get(i)].split(", ")[0]);
+        }
+
+        return result.toArray(new String[result.size()]);
     }
 
     /*
