@@ -241,7 +241,7 @@ public class UpgradeCalculator {
         for (int i = 0; i < ans.size(); i++) {
             result.add(upgradeData[ans.get(i)].split(", ")[0]);
         }
-        return result.toArray(new String[0]);
+        return result.toArray(new String[result.size()]);
     }
 
     public List<Integer> knapsackSolution(int noItems, int maxMoney, int maxTime, int[] time, int[] money, double[] cong, double[][][] f, boolean[][][] p) {
@@ -267,14 +267,13 @@ public class UpgradeCalculator {
         int t = maxTime;
         for (int k = noItems; k >= 1; k--) {
             result += "item " + (k-1) + " Included: " +p[k][l][t] +"\n";
-            if (money[k - 1] <= l && time[k - 1] <= t && p[k][l][t]) {
-                if (p[k][l][t] || !graph.nodeList.get(intersectionStringToIndex.get(intersectionIndexToString.get(k - 1))).selected) {
-                    graph.selectNode(intersectionStringToIndex.get(intersectionIndexToString.get(k - 1)));
-                    l = l - money[k - 1];
-                    t = t - time[k - 1];
-                }
+            if (p[k][l][t] || !graph.nodeList.get(intersectionStringToIndex.get(intersectionIndexToString.get(k - 1))).selected) {
+                graph.selectNode(intersectionStringToIndex.get(intersectionIndexToString.get(k - 1)));
+                l = l - money[k - 1];
+                t = t - time[k - 1];
             }
         }
+        System.out.println(result);
         String[] output = result.split("\n");
         for (int k = 0; k < output.length; k++) {
             if (output[k].contains("true")) {
