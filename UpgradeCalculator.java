@@ -102,7 +102,6 @@
     private Map<String, String> endPointToRoadName = new HashMap<>(); // Map of concatenated endpoints to road names
     private Map<String, List<GraphEdge>> roadMap = new HashMap<>(); // Map of road names to road nodes
     private Graph graph; // Graph object to store the city map
-    private double congestion = 0.0; // Stores the congestion of the city map
      
      public UpgradeCalculator(int seed){
          mapGen = new MapGenerator(seed); // Pass a seed to the random number generator, allows for reproducibility
@@ -121,6 +120,15 @@
          }
  
          // Write your code below this line - just copy from your assignment 1 solution, it's the same map generator
+
+         // Reset data structures to allow for multiple calls to loadMap. This avoids data from previous calls to loadMap being used in the current call.
+            roadStringToIndex.clear();
+            roadIndexToString.clear();
+            intersectionStringToIndex.clear();
+            intersectionIndexToString.clear();
+            endPointToRoadName.clear();
+            roadMap.clear();
+
          // Split the cityMap string into individual road strings
          String[] roads = cityMap.split("}, \\{");
  
@@ -309,7 +317,6 @@
              int id = intersectionStringToIndex.get(upgrade[0]);
              for (int j = 0; j < graph.adjList.get(id).size(); j++) {
                  GraphEdge edge = graph.adjList.get(id).get(j);
-                 congestion += edge.weight;
                  cong[i] += edge.weight;
              }
              if (money[i] <= maxMoney && time[i] <= maxTime) {
@@ -378,30 +385,22 @@
             boolean[] bestSolution = solution.clone();
             double[] bestScore = score.clone();
 
-            //printSolution(bestSolution, noItems);;
-         //printScore(bestScore);
-
          for (int i = 0; i < 1000; i++) {
             
             // generate a flip move randomly
             int flipIndex = rng.nextInt(noItems);
-            //System.out.println("flipIndex: " + flipIndex);
 
             // Get score of the new solution
             double[] newScore = evalFlippedSolution(bigM, solution, score, noItems, money, time, budgetLimit, timeLimit, flipIndex);
             
             if (newScore[0] < score[0]) {
-                //System.out.println("Move Accepted");
 
                 // Apply the flip move
                 applyFlip(solution, score, flipIndex, money, time, bigM, budgetLimit, timeLimit);
 
                 if (score[0] < bestScore[0]) {
-                    //System.out.println("New Best Solution");
                     bestSolution = solution.clone();
                     bestScore = score.clone();
-                    //printScore(bestScore);
-                    //printSolution(bestSolution, noItems);
                 }
             }
          }
@@ -434,7 +433,6 @@
                 
                 for (GraphEdge edge : graph.adjList.get(intersectionStringToIndex.get(upgradeData[i].split(", ")[0]))) {
                     if (!selectedNodes.contains(edge.target)) {
-                        //System.out.println("edge: " + intersectionIndexToString.get(edge.source) + " " + intersectionIndexToString.get(edge.target) + " " + edge.weight);
                         score[3] += edge.weight;
                     }
                 }
@@ -487,19 +485,4 @@
 
         return flippedScore;
      }
-
-     static void printSolution(boolean [] solution, int itemCount)
-    {
-    System.out.print("solution: ");
-    for(int i = 0; i < itemCount; i++)
-    System.out.print(" " + solution[i]);
-    System.out.println();
-    }
-    // print the score
-    static void printScore(double[] score)
-    {
-        System.out.println("Total: " + score[0] + " Money: " + score[1] + " Time: " + score[2] + " Congestion: " + score[3]);
-    }
-
-
  }
