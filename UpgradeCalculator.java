@@ -445,12 +445,20 @@
      }
 
      private void applyFlip(boolean[] solution, double[] score, int flipIndex, int[] money, int[] time, int bigM, int budgetLimit, int timeLimit) {
+        HashSet<Integer> selectedNodes = new HashSet<>();
+        for (int i = 0; i < 8; i++) {
+            if (solution[i]) {
+                selectedNodes.add(intersectionStringToIndex.get(upgradeData[i].split(", ")[0]));
+            }
+        }
         if (solution[flipIndex]) {
             solution[flipIndex] = false;
             score[1] -= money[flipIndex];
             score[2] -= time[flipIndex];
             for (GraphEdge edge : graph.adjList.get(intersectionStringToIndex.get(upgradeData[flipIndex].split(", ")[0]))) {
-                score[3] -= edge.weight;
+                if (!selectedNodes.contains(edge.target)) {
+                    score[3] -= edge.weight;
+                }
             }
             score[0] = Math.max(0, score[1] - budgetLimit) + Math.max(0, score[2] - timeLimit) * bigM - score[3];
         } else {
@@ -458,7 +466,9 @@
             score[1] += money[flipIndex];
             score[2] += time[flipIndex];
             for (GraphEdge edge : graph.adjList.get(intersectionStringToIndex.get(upgradeData[flipIndex].split(", ")[0]))) {
-                score[3] += edge.weight;
+                if (!selectedNodes.contains(edge.target)) {
+                    score[3] += edge.weight;
+                }
             }
             score[0] = Math.max(0, score[1] - budgetLimit) + Math.max(0, score[2] - timeLimit) * bigM - score[3];
         }
@@ -466,19 +476,28 @@
 
      private double[] evalFlippedSolution (int bigM, boolean[] solution, double[] score, int noItems, int[] money, int[] time, int budgetLimit, int timeLimit, int flipIndex) {
         double[] flippedScore = score.clone();
-
+        HashSet<Integer> selectedNodes = new HashSet<>();
+        for (int i = 0; i < noItems; i++) {
+            if (solution[i]) {
+                selectedNodes.add(intersectionStringToIndex.get(upgradeData[i].split(", ")[0]));
+            }
+        }
         if (solution[flipIndex]) {
             flippedScore[1] -= money[flipIndex];
             flippedScore[2] -= time[flipIndex];
             for (GraphEdge edge : graph.adjList.get(intersectionStringToIndex.get(upgradeData[flipIndex].split(", ")[0]))) {
-                flippedScore[3] -= edge.weight;
+                if (!selectedNodes.contains(edge.target)) {
+                    flippedScore[3] -= edge.weight;
+                }
             }
             flippedScore[0] = Math.max(0, flippedScore[1] - budgetLimit) + Math.max(0, flippedScore[2] - timeLimit) * bigM - flippedScore[3];
         } else {
             flippedScore[1] += money[flipIndex];
             flippedScore[2] += time[flipIndex];
             for (GraphEdge edge : graph.adjList.get(intersectionStringToIndex.get(upgradeData[flipIndex].split(", ")[0]))) {
-                flippedScore[3] += edge.weight;
+                if (!selectedNodes.contains(edge.target)) {
+                    flippedScore[3] += edge.weight;
+                }
             }
             flippedScore[0] = Math.max(0, flippedScore[1] - budgetLimit) + Math.max(0, flippedScore[2] - timeLimit) * bigM - flippedScore[3];
         }
