@@ -12,7 +12,6 @@
  import java.util.HashMap;
  import java.util.List;
  import java.util.Map;
-    import java.util.Set;
     import java.util.HashSet;
     import java.util.Random;
  
@@ -203,6 +202,8 @@
  
          // creates a new Graph object with the number of endpoints and the graphMatrix
          graph = new Graph(endPointCount, graphMatrix);
+
+         // Load data structures to support the
      }
  
      /*
@@ -224,23 +225,11 @@
          int[] money = new int[upgradeData.length]; // weight of the item
          int[] time = new int[upgradeData.length]; // value of the item
          int noItems = upgradeData.length;
-         double[] congestion = new double[upgradeData.length]; // value of the item
-         double[] totalCongestion = new double[upgradeData.length]; // value of the item
 
-         Set<String> selectedNodes = new HashSet<>();
          for (int i = 0; i < noItems; i++) {
              String[] upgrade = upgradeData[i].split(", ");
              money[i] = Integer.parseInt(upgrade[1]);
              time[i] = Integer.parseInt(upgrade[2]);
-             selectedNodes.add(upgrade[0]);
-
-             for (int j = 0; j < graph.adjList.get(intersectionStringToIndex.get(upgrade[0])).size(); j++) {
-                 GraphEdge edge = graph.adjList.get(intersectionStringToIndex.get(upgrade[0])).get(j);
-                 if (!selectedNodes.contains(intersectionIndexToString.get(edge.target))) {
-                     congestion[i] += edge.weight;
-                 }
-                 totalCongestion[i] += edge.weight;
-             }
          }
 
          double[][][] total = new double[noItems + 1][budgetLimit + 1][timeLimit + 1];
@@ -248,26 +237,7 @@
 
          // Perform the knapsack algorithm 
 
-            for (int i = 0; i <= noItems; i++) {
-                for (int j = 0; j <= budgetLimit; j++) {
-                    for (int k = 0; k <= timeLimit; k++) {
-                        if (i == 0 || j == 0 || k == 0) {
-                            total[i][j][k] = 0;
-                        } else if (money[i - 1] <= j && time[i - 1] <= k) {
-                            double value1 = total[i - 1][j][k];
-                            double value2 = total[i - 1][j - money[i - 1]][k - time[i - 1]] + congestion[i - 1];
-                            if (value1 > value2) {
-                                total[i][j][k] = value1;
-                                selected[i][j][k] = false;
-                            } else {
-                                total[i][j][k] = value2;
-                                selected[i][j][k] = true;
-                            }
-                        } else {
-                            total[i][j][k] = total[i - 1][j][k] + congestion[i - 1];
-                    }
-                }
-            }}
+         performKnapsack(noItems, budgetLimit, timeLimit, money, time, total, selected);
 
          //throw new UnsupportedOperationException("Not implemented yet");
             List<String> result = new ArrayList<>();
@@ -276,7 +246,7 @@
             int k = timeLimit;
             while (i > 0) {
                 if (selected[i][j][k]) {
-                    result.add(upgradeData[i - 1].split(", ")[0]);
+                    result.add(intersectionIndexToString.get(intersectionStringToIndex.get(upgradeData[i - 1].split(", ")[0])));
                     j -= money[i - 1];
                     k -= time[i - 1];
                 }
@@ -285,8 +255,63 @@
             return result.toArray(new String[result.size()]);
      }
 
-     
+     // Perform the knapsack search
+     private void performKnapsack (int noItems, int budgetLimit, int timeLimit, int[] money, int[] time, double[][][] total, boolean[][][] selected) {
+        
+        // Perform base case for the knapsack algorithm when 0 items are selected
+        for (int j = 0; j <= budgetLimit; j++) {
+            for (int k = 0; k <= timeLimit; k++) {
+                total[0][j][k] = 0;
+                selected[0][j][k] = false;
+            }
+        }
 
+        // Perform the knapsack algorithm for all items
+        for (int i = 1; i <= noItems; i++) {
+            for (int m = 0; m <= budgetLimit; m++) {
+                for (int n = 0; n <= timeLimit; n++) {
+                    
+                    // If the upgrade is too expensive or takes too long, do not select it
+                    if (money[i - 1] > m || time[i - 1] > n) {
+                        total[i][m][n] = total[i - 1][m][n];
+                        selected[i][m][n] = false;
+                    }
+
+                    // If the upgrade can be selected, select it
+                    else {
+                        HashSet<Integer> selectedNodes = new HashSet<>();
+                        double value = 0;
+                        int usedMoney = m;
+                        int usedTime = n;
+                        for (int j = i; j >= 1; j--) {
+                            if (usedMoney - money[j - 1] >= 0 && usedTime - time[j - 1] >= 0) { 
+                                if (selected[j][usedMoney][usedTime] || i == j) {
+                                    for (GraphEdge edge : graph.adjList.get(intersectionStringToIndex.get(upgradeData[j - 1].split(", ")[0]))) {
+                                            if (!selectedNodes.contains(edge.target)) {
+                                                value += edge.weight;
+                                            }
+                                            if (!selectedNodes.contains(edge.source)) {
+                                                usedMoney -= money[j - 1];
+                                                usedTime -= time[j - 1];
+                                                selectedNodes.add(edge.source);
+                                            }
+                                    }
+                                }
+                            }
+                        }
+                        // decide if pervious or current is most optimal
+                        if (value > total[i - 1][m][n]) {
+                            total[i][m][n] = value;
+                            selected[i][m][n] = true;
+                        } else {
+                            total[i][m][n] = total[i - 1][m][n];
+                            selected[i][m][n] = false;
+                        }
+                    }
+                }
+            }
+        }
+     }
  
      /*
       * @param budgetLimit the maximum amount of money that can be spent on road upgrades
@@ -369,7 +394,6 @@
          int noItems = upgradeData.length;
             int[] money = new int[noItems];
             int[] time = new int[noItems];
-            double[] cong = new double[noItems];
 
          for (int i = 0; i < upgradeData.length; i++) {
             String[] upgrade = upgradeData[i].split(", ");
